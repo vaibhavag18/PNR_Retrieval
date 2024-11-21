@@ -147,7 +147,7 @@ loaded_model = pickle.load(open("models/model.sav", "rb"))
 
 def download_image(url, save_path):
     try:
-        response = s.get(url, stream=True)
+        response = s.get(url, stream=True,verify=False)
         response.raise_for_status()
         with open(save_path + ".png", "wb") as file:
             for chunk in response.iter_content(chunk_size=8192):
