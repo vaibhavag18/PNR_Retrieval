@@ -11,10 +11,25 @@ s = requests.Session()
 
 # Load the pre-trained model
 loaded_model = pickle.load(open("models/model.sav", "rb"))
+import requests
+import ssl
+from requests.adapters import HTTPAdapter
 
+# Create a custom SSL context to avoid SSL verification issues
+context = ssl.create_default_context()
+context.check_hostname = False
+context.verify_mode = ssl.CERT_NONE
+
+# Create a PoolManager instance with the custom SSL context
+adapter = HTTPAdapter(pool_connections=100, pool_maxsize=100, pool_block=True, ssl_context=context)
+
+# Apply adapter to session
+s.mount("https://", adapter)
+
+# Proceed with the request
 def download_image(url, save_path):
     try:
-        response = s.get(url, stream=True, timeout=10, verify=False)  # Disabled SSL verification temporarily
+        response = s.get(url, stream=True, timeout=10)
         response.raise_for_status()
         with open(save_path + ".png", "wb") as file:
             for chunk in response.iter_content(chunk_size=8192):
