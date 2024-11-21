@@ -146,7 +146,7 @@ retry_strategy = Retry(
     total=5,
     backoff_factor=1,
     status_forcelist=[429, 500, 502, 503, 504],
-    method_whitelist=["GET"]
+    allowed_methods=["GET"],  # Updated from 'method_whitelist' to 'allowed_methods'
 )
 adapter = HTTPAdapter(max_retries=retry_strategy)
 s.mount("https://", adapter)
