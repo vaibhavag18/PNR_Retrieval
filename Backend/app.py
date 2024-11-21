@@ -3,6 +3,7 @@ import pickle
 import cv2
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -12,6 +13,9 @@ loaded_model = pickle.load(open("models/model.sav", "rb"))
 
 def download_image(url, save_path):
     try:
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        
         response = s.get(url, stream=True)
         response.raise_for_status()
         with open(save_path + ".png", "wb") as file:
