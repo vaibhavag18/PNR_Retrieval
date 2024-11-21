@@ -13,18 +13,17 @@ loaded_model = pickle.load(open("models/model.sav", "rb"))
 
 def download_image(url, save_path):
     try:
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        
-        response = s.get(url, stream=True)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+        }
+        response = s.get(url, headers=headers, stream=True)
         response.raise_for_status()
-        with open(save_path + ".png", "wb") as file:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        with open(save_path, "wb") as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
-
         print("Image downloaded successfully.")
         return True
-
     except requests.exceptions.RequestException as e:
         print(f"Error occurred: {e}")
         return False
