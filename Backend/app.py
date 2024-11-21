@@ -14,16 +14,20 @@ loaded_model = pickle.load(open("models/model.sav", "rb"))
 
 def download_image(url, save_path):
     try:
-        response = s.get(url, stream=True, timeout=10)  # Added timeout to avoid hanging indefinitely
+        response = s.get(url, stream=True, timeout=10, verify=False)  # Disabled SSL verification temporarily
         response.raise_for_status()
         with open(save_path + ".png", "wb") as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
         print("Image downloaded successfully.")
         return True
-    except requests.exceptions.RequestException as e:
-        print(f"Error occurred: {e}")
+    except requests.exceptions.SSLError as e:
+        print(f"SSL Error occurred: {e}")
         return False
+    except requests.exceptions.RequestException as e:
+        print(f"Request Error occurred: {e}")
+        return False
+
 
 def segment(image, st):
     flag = 0
