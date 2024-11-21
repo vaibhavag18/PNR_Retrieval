@@ -53,7 +53,7 @@ def segment(image, st):
 def predict_number():
     dfX = []
     image_url = "https://www.indianrail.gov.in/enquiry/captchaDraw.png?1690016648505"
-    save_location = "predict/" + str(0)
+    save_location = "predict/0.png" 
     download_image(image_url, save_location)
 
     image = cv2.imread("predict/0.png", cv2.IMREAD_UNCHANGED)
