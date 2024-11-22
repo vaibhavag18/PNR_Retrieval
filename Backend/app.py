@@ -273,6 +273,10 @@ loaded_model = pickle.load(open(MODEL_PATH, "rb"))
 # Create the predict folder if it doesn't exist
 os.makedirs("predict", exist_ok=True)
 
+@app.route("/")
+def home():
+    return "API is running!", 200
+
 
 def download_image(url, save_path):
     try:
@@ -378,4 +382,4 @@ def finpredict():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(host="0.0.0.0", port=8080)
