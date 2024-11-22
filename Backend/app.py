@@ -386,21 +386,32 @@
 
 
 
+import os
 import requests
 import pickle
 import cv2
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
+# Initialize Flask App
 app = Flask(__name__)
 CORS(app)
-s = requests.Session()
-loaded_model = pickle.load(open("models/model.sav", "rb"))
 
+# Set up paths for models and predict folder
+MODEL_PATH = os.path.join(os.getcwd(), "models", "model.sav")
+PREDICT_PATH = os.path.join(os.getcwd(), "predict")
 
+# Ensure predict folder exists
+if not os.path.exists(PREDICT_PATH):
+    os.makedirs(PREDICT_PATH)
+
+# Load the pre-trained model
+loaded_model = pickle.load(open(MODEL_PATH, "rb"))
+
+# Function to download an image from a URL
 def download_image(url, save_path):
     try:
-        response = s.get(url, stream=True)
+        response = requests.get(url, stream=True)
         response.raise_for_status()
         with open(save_path + ".png", "wb") as file:
             for chunk in response.iter_content(chunk_size=8192):
@@ -413,7 +424,7 @@ def download_image(url, save_path):
         print(f"Error occurred: {e}")
         return False
 
-
+# Function to segment an image
 def segment(image, st):
     flag = 0
     flag2 = 0
@@ -433,13 +444,13 @@ def segment(image, st):
     finalImage = image[:, start:end]
     return finalImage, end
 
-
+# Function to predict captcha numbers
 def predict_number():
     dfX = []
     image_url = "https://www.indianrail.gov.in/enquiry/captchaDraw.png?1690016648505"
-    save_location = "predict/" + str(0)
+    save_location = os.path.join(PREDICT_PATH, "0")
     download_image(image_url, save_location)
-    image = cv2.imread("predict/0.png", cv2.IMREAD_UNCHANGED)
+    image = cv2.imread(save_location + ".png", cv2.IMREAD_UNCHANGED)
     trans_mask = image[:, :, 3] == 0
     image[trans_mask] = [255, 255, 255, 255]
     image = cv2.bitwise_not(image)
@@ -465,7 +476,6 @@ def predict_number():
                 plus = 1
             dig1 = dig
             dig = 0
-
         else:
             dig = dig * 10 + i
     if plus:
@@ -474,32 +484,32 @@ def predict_number():
         dig1 -= dig
     return dig1
 
-
+# Function to get PNR status
 def get_pnr_status(captcha, pnr_number):
     base_url = f"https://www.indianrail.gov.in/enquiry/CommonCaptcha?inputCaptcha={captcha}&inputPnrNo={pnr_number}&inputPage=PNR&language=en"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
     }
-    response = s.get(base_url, headers=headers)
+    response = requests.get(base_url, headers=headers)
     if response.status_code == 200:
         return response.json()
     else:
         print(f"Failed to retrieve data. Status code: {response.status_code}")
-        s.close()
-        return None
+        return {"error": "Failed to retrieve data", "status_code": response.status_code}
 
-
+# Route for predicting PNR status
 @app.route("/finpredict", methods=["GET"])
 def finpredict():
-    captcha = predict_number()  # Replace with your desired captcha value
-    pnr_number = int(
-        request.args.get("pnrnumber")
-    )  # Replace with your desired PNR number
+    try:
+        captcha = predict_number()  # Predict the captcha
+        pnr_number = int(
+            request.args.get("pnrnumber")
+        )  # Get the PNR number from the query params
+        json_data = get_pnr_status(captcha, pnr_number)
+        return jsonify(json_data)
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
-    json_data = get_pnr_status(captcha, pnr_number)
-
-    return json_data
-
-
+# Main entry point
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
